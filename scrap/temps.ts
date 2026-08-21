@@ -135,7 +135,7 @@ async function getAllPerformances(
 
 async function searchSwimmer(
   query: string,
-  pickIndex = 0,
+  pickIndex: number | undefined,
 ): Promise<SearchResults> {
   const people = await findPeople(query);
 
@@ -143,29 +143,35 @@ async function searchSwimmer(
     throw new Error(`No swimmer found for "${query}"`);
   }
 
-  if (pickIndex < 0 || pickIndex >= people.length) {
-    throw new Error(
-      `Invalid index ${pickIndex}. Found ${people.length} match(es).`,
-    );
-  }
-
-  if (people.length > 1) {
-    console.error(`Found ${people.length} matches:`);
+  if (people.length > 1 && pickIndex === undefined) {
+    console.error(`Found ${people.length} matches for "${query}":`);
     people.forEach((person, index) => {
       console.error(`  [${index}] ${person.ind}`);
     });
-    console.error(
-      `Using match [${pickIndex}]. Pass another index to pick one.\n`,
+    throw new Error(
+      "Several swimmers match. Re-run with the index of the right one.\n" +
+        `Example: npm run scrap -- ${query} 1`,
     );
   }
 
-  return getAllPerformances(people[pickIndex]!);
+  const index = pickIndex ?? 0;
+
+  if (index < 0 || index >= people.length) {
+    throw new Error(
+      `Invalid index ${index}. Found ${people.length} match(es).`,
+    );
+  }
+
+  return getAllPerformances(people[index]!);
 }
 
-function parseArgs(argv: string[]): { query: string; pickIndex: number } {
+function parseArgs(argv: string[]): {
+  query: string;
+  pickIndex: number | undefined;
+} {
   const args = [...argv];
 
-  let pickIndex = 0;
+  let pickIndex: number | undefined;
   const lastArg = args.at(-1);
   if (lastArg !== undefined && /^\d+$/.test(lastArg)) {
     pickIndex = Number(lastArg);

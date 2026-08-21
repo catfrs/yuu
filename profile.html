@@ -158,6 +158,35 @@
   .db-item b { font-size: 15px; font-weight: 700; }
   .db-item span { color: rgba(255,255,255,.55); font-size: 11px; text-transform: uppercase; letter-spacing: .6px; font-weight: 600; }
 
+  /* ---------- section shortcuts ---------- */
+  .section-nav {
+    position: sticky; top: 0; z-index: 40;
+    background: var(--panel-dark);
+    box-shadow: 0 2px 10px rgba(0,0,0,.22);
+  }
+  .sn-inner {
+    max-width: 1100px; margin: 0 auto; padding: 0 24px;
+    display: flex; gap: 24px; height: 44px; align-items: stretch;
+    overflow-x: auto; scrollbar-width: none;
+  }
+  .sn-inner::-webkit-scrollbar { display: none; }
+  .sn-inner a {
+    display: flex; align-items: center;
+    color: #fff; opacity: .62; text-decoration: none;
+    font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .7px;
+    border-bottom: 3px solid transparent; white-space: nowrap;
+    transition: opacity .12s, border-color .12s;
+  }
+  .sn-inner a:hover { opacity: .92; }
+  .sn-inner a.active { opacity: 1; border-bottom-color: var(--pink); }  .sn-fade {
+    position: absolute; top: 0; bottom: 0; width: 28px;
+    pointer-events: none; opacity: 0; transition: opacity .2s; z-index: 1;
+  }
+  .sn-fade.left { left: 0; background: linear-gradient(90deg, var(--panel-dark), transparent); }
+  .sn-fade.right { right: 0; background: linear-gradient(-90deg, var(--panel-dark), transparent); }
+  .sn-fade.on { opacity: 1; }
+  [id^="sec-"] { scroll-margin-top: 52px; }
+
   .container { max-width: 1100px; margin: 0 auto; padding: 22px 24px 70px; }
 
   /* ---------- panels ---------- */
@@ -328,6 +357,20 @@
     color: #fff; border-radius: 4px; padding: 2px 7px;
   }
 
+  /* ---------- club records ---------- */
+  .rc-badge {
+    display: inline-block; background: var(--gold); color: #fff;
+    font-size: 10px; font-weight: 800; letter-spacing: .5px;
+    border-radius: 999px; padding: 2px 8px;
+  }
+  .rc-times { margin-top: 7px; display: flex; flex-direction: column; gap: 3px; }
+  .rc-times span { font-size: 12.5px; font-weight: 600; color: var(--text-light); }
+  .rc-times b {
+    display: inline-block; min-width: 34px; color: var(--text-light);
+    font-size: 10.5px; font-weight: 800; text-transform: uppercase;
+  }
+  .rc-times i { font-style: normal; color: var(--text); font-weight: 800; font-variant-numeric: tabular-nums; }
+
   /* ---------- history table ---------- */
   .table-tools {
     display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
@@ -384,6 +427,13 @@
     .detail-bar { gap: 20px; overflow-x: auto; }
     .play-row { grid-template-columns: 44px 1fr auto; gap: 10px; padding: 10px 12px; }
     .rank-badge { width: 38px; height: 38px; font-size: 16px; }
+    .sn-inner { gap: 16px; height: 42px; padding: 0 56px 0 14px; }
+    .sn-inner a { font-size: 11px; letter-spacing: .5px; }
+    [id^="sec-"] { scroll-margin-top: 50px; }
+    .pool-tabs { width: 100%; margin-left: 0; margin-top: 8px; }
+    .panel-title { flex-wrap: wrap; row-gap: 2px; }
+    .pb-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+    .stat-card .value { font-size: 22px; }
   }
 </style>
 <script>
@@ -457,6 +507,19 @@ function parsePerson(ind) {
   const m = ind.match(/^(.+?)\s+\((\d{4})\)\s+(\w)\s+(\w+)\s+-\s+(.+)$/);
   return m ? { name: m[1], born: m[2], gender: m[3], country: m[4], clubFromInd: m[5] } : { name: ind, born: '', gender: '', country: '', clubFromInd: '' };
 }
+function parseCSV(str) {
+  const rows = []; let row = [], cell = '', q = false;
+  for (let i = 0; i < str.length; i++) {
+    const c = str[i];
+    if (q) { if (c === '"') { if (str[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += c; }
+    else if (c === '"') q = true;
+    else if (c === ',') { row.push(cell); cell = ''; }
+    else if (c === '\n') { row.push(cell); rows.push(row); row = []; cell = ''; }
+    else if (c !== '\r') cell += c;
+  }
+  if (cell || row.length) { row.push(cell); rows.push(row); }
+  return rows;
+}
 
 function render(data) {
   const person = data[0].person;
@@ -509,16 +572,30 @@ function render(data) {
     <div class="db-item"><b>${best._pts} pts</b><span>Record personnel</span></div>
   </div></div>
 
+  <nav class="section-nav" id="section-nav">
+    <div class="sn-inner">
+      <a href="#sec-stats" class="active">Aperçu</a>
+      <a href="#sec-progression">Progression</a>
+      <a href="#sec-perfs">Meilleures perfs</a>
+      <a href="#sec-pb">Records perso</a>
+      <a href="#sec-rc">Records club</a>
+      <a href="#sec-resultats">Résultats</a>
+    </div>
+    <span class="sn-fade left"></span>
+    <span class="sn-fade right on"></span>
+  </nav>
+
   <div class="container">
 
-    <div class="stats-row">
+    <div class="stats-row" id="sec-stats">
       ${statCard('Meilleure performance', `${best._pts} pts`, `${best.eventCode} · ${best.time}`, '#ff66ab')}
       ${statCard('Moyenne de points', Math.round(perfs.reduce((s, p) => s + p._pts, 0) / perfs.length) + ' pts', `sur ${perfs.length} courses`, '#1e90ff')}
       ${statCard('Records personnels', pbCount, 'épreuves distinctes (par bassin)', '#3bb98f')}
       ${statCard('Niveau max', 'NAT', `${perfs.filter(p => p.level.includes('NAT')).length} courses nationales`, '#e8484f')}
+      ${statCard('Records du club', '<span id="rc-total">…</span>', 'détenteurs actuels', '#ffc84a')}
     </div>
 
-    <div class="panel">
+    <div class="panel" id="sec-progression">
       <div class="panel-title"><h2>Progression des points</h2><span class="hint">chaque point est une course · filtre par nage, distance et bassin</span></div>
       <div class="chart-body">
         <div id="chart-filters" class="chart-filters"></div>
@@ -530,15 +607,15 @@ function render(data) {
       </div>
     </div>
 
-    <div class="panel">
+    <div class="panel" id="sec-perfs">
       <div class="panel-title"><h2>Meilleures performances</h2><span class="hint">top 8 · record par épreuve</span></div>
       <div class="plays-grid" id="top-plays"></div>
     </div>
 
-    <div class="panel">
+    <div class="panel" id="sec-pb">
       <div class="panel-title">
         <h2>Records personnels</h2>
-        <div class="pool-tabs">
+        <div class="pool-tabs" id="pb-tabs">
           <button class="pool-tab active" data-pool="all">Tous</button>
           <button class="pool-tab" data-pool="25m">25 m</button>
           <button class="pool-tab" data-pool="50m">50 m</button>
@@ -551,7 +628,20 @@ function render(data) {
       <div class="pb-grid" id="pb-grid"></div>
     </div>
 
-    <div class="panel">
+    <div class="panel" id="sec-rc">
+      <div class="panel-title">
+        <h2>Records du club</h2>
+        <span class="hint">épreuves détenues par Eliott</span>
+        <div class="pool-tabs" id="rc-tabs">
+          <button class="pool-tab active" data-pool="all">Tous</button>
+          <button class="pool-tab" data-pool="25m">25 m</button>
+          <button class="pool-tab" data-pool="50m">50 m</button>
+        </div>
+      </div>
+      <div class="pb-grid" id="rc-grid"></div>
+    </div>
+
+    <div class="panel" id="sec-resultats">
       <div class="panel-title"><h2>Tous les résultats</h2></div>
       <div class="table-tools">
         <input class="search-input" id="search" type="search" placeholder="Rechercher (épreuve, lieu, année…)" />
@@ -626,8 +716,8 @@ function render(data) {
       })).join('');
   }
   renderPB('all');
-  document.querySelectorAll('.pool-tab').forEach(btn => btn.addEventListener('click', () => {
-    document.querySelectorAll('.pool-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('#pb-tabs .pool-tab').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('#pb-tabs .pool-tab').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     renderPB(btn.dataset.pool);
   }));
@@ -682,7 +772,7 @@ function render(data) {
   function closeRowMenu() { rowMenu.classList.remove('open'); menuFor = null; }
   function openRowMenu(btn, key) {
     menuFor = key;
-    rowMenu.firstElementChild.textContent = pinnedKeys.has(key) ? '✕ Retirer des épinglés' : '📌 Épingler ce temps';
+    rowMenu.firstElementChild.textContent = pinnedKeys.has(key) ? '✕ Retirer des épinglés' : 'Épingler ce temps';
     const r = btn.getBoundingClientRect();
     rowMenu.style.top = Math.min(r.bottom + 6, window.innerHeight - 56) + 'px';
     rowMenu.style.right = (window.innerWidth - r.right) + 'px';
@@ -750,6 +840,116 @@ function render(data) {
   buildChartFilters(perfs);
   wireLegend();
   drawChart(perfs);
+
+  /* ---- club records ---- */
+  const RC_STROKE = { 'NL': 'NL', 'DOS': 'Dos', 'BR': 'Bra.', 'PAP': 'Pap.', '4N': '4 N.' };
+  const RC_LABEL = { 'NL': 'Nage Libre', 'DOS': 'Dos', 'BR': 'Brasse', 'PAP': 'Papillon', '4N': '4 Nages' };
+  function loadRecords(pool) {
+    return fetch(`./data/club-records-${pool}.csv`)
+      .then(r => r.ok ? r.text() : '')
+      .then(txt => {
+        if (!txt) return [];
+        const rows = parseCSV(txt);
+        if (rows.length < 3) return [];
+        const ages = rows[1].slice(1, 12);
+        const out = [];
+        rows.slice(2).forEach(r => {
+          const ev = (r[0] || '').trim();
+          const dm = ev.match(/^(\d+)\s+(.+)$/);
+          if (!dm) return;
+          r.slice(1, 12).forEach((cell, i) => {
+            if (!cell) return;
+            const lines = cell.split('\n').map(s => s.trim());
+            if (!lines.some(l => /fauron/i.test(l))) return;
+            out.push({
+              pool, dist: +dm[1], strokeKey: dm[2].toUpperCase(),
+              age: ages[i], time: lines[0],
+              year: (lines.find(l => /^\d{4}$/.test(l)) || ''),
+              ageIdx: i,
+            });
+          });
+        });
+        return out;
+      })
+      .catch(() => []);
+  }
+
+  let rcPool = 'all';
+  let RC_ALL = [];
+  function renderRC() {
+    const groups = {};
+    RC_ALL.forEach(r => {
+      if (rcPool !== 'all' && r.pool !== rcPool) return;
+      const k = r.pool + '|' + r.dist + '|' + r.strokeKey;
+      (groups[k] ||= []).push(r);
+    });
+    const entries = Object.entries(groups).sort(([ka], [kb]) => {
+      const [pa, da, sa] = ka.split('|'), [pb2, db, sb] = kb.split('|');
+      return pa.localeCompare(pb2) || (+da - +db) || sa.localeCompare(sb);
+    });
+    document.getElementById('rc-grid').innerHTML = entries.length ? entries.map(([k, list]) => {
+      const { pool, dist } = list[0];
+      const sk = STROKES.find(s => s.key === RC_STROKE[list[0].strokeKey]);
+      const times = list.slice().sort((a, b) => a.ageIdx - b.ageIdx).map(r =>
+        `<span title="record établi en ${r.year || '?'}"><b>${r.age.replace(' ans et +', '+').replace(' ans', '')}</b><i>${r.time}</i></span>`
+      ).join('');
+      return `
+      <div class="pb-card" style="--stroke-color:${sk?.color || 'var(--gold)'}">
+        <div class="pb-event">${dist} m ${RC_LABEL[list[0].strokeKey] || list[0].strokeKey}</div>
+        <div class="pb-sub">${pool === '25m' ? 'Bassin 25 m' : 'Bassin 50 m'} · <span class="rc-badge">RC ×${list.length}</span></div>
+        <div class="rc-times">${times}</div>
+      </div>`;
+    }).join('') : '<p style="grid-column:1/-1;color:var(--text-light);font-size:13px;font-weight:500">Aucun record chargé.</p>';
+    document.getElementById('rc-total').textContent = RC_ALL.length;
+  }
+  Promise.all([loadRecords('25m'), loadRecords('50m')]).then(([r25, r50]) => {
+    RC_ALL = [...r25.map(r => ({ ...r })), ...r50];
+    renderRC();
+  });
+  document.querySelectorAll('#rc-tabs .pool-tab').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('#rc-tabs .pool-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    rcPool = btn.dataset.pool;
+    renderRC();
+  }));
+
+  /* ---- section shortcuts ---- */
+  const secLinks = [...document.querySelectorAll('#section-nav a')];
+  const secTargets = secLinks.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+  const snInner = document.querySelector('.sn-inner');
+  const snFades = {
+    left: document.querySelector('.sn-fade.left'),
+    right: document.querySelector('.sn-fade.right'),
+  };
+  function updateSnFades() {
+    snFades.left.classList.toggle('on', snInner.scrollLeft > 4);
+    snFades.right.classList.toggle('on', snInner.scrollLeft + snInner.clientWidth < snInner.scrollWidth - 4);
+  }
+  snInner.addEventListener('scroll', updateSnFades, { passive: true });
+  window.addEventListener('resize', updateSnFades);
+
+  secLinks.forEach(a => a.addEventListener('click', e => {
+    e.preventDefault();
+    const t = document.querySelector(a.getAttribute('href'));
+    if (!t) return;
+    window.scrollTo({ top: t.getBoundingClientRect().top + window.scrollY - 52, behavior: 'smooth' });
+  }));
+  let lastSecIdx = -1;
+  function updateActiveSec() {
+    const y = window.scrollY + 80;
+    let idx = 0;
+    secTargets.forEach((t, i) => { if (t.getBoundingClientRect().top + window.scrollY <= y) idx = i; });
+    secLinks.forEach((a, i) => a.classList.toggle('active', i === idx));
+    if (idx !== lastSecIdx) {
+      lastSecIdx = idx;
+      const el = secLinks[idx];
+      const target = el.offsetLeft - (snInner.clientWidth - el.offsetWidth) / 2 + 14;
+      snInner.scrollTo({ left: Math.max(0, target), behavior: 'smooth' });
+    }
+  }
+  window.addEventListener('scroll', updateActiveSec, { passive: true });
+  updateActiveSec();
+  updateSnFades();
 }
 
 function statCard(label, value, sub, accent) {
