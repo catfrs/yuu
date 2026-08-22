@@ -349,6 +349,10 @@
   }
   .chart-tooltip b { color: var(--pink); font-size: 13px; }
 
+  /* ---------- chart views ---------- */
+  #view-skills { padding-top: 4px; }
+  #skill-chart { width: 100%; height: 340px; display: block; }
+
   /* ---------- top plays ---------- */
   .plays-grid { display: grid; gap: 10px; padding: 14px 22px 22px; }
   .play-row {
@@ -565,6 +569,7 @@ const STROKES = [
   { key: '4 N.', label: '4 Nages',     color: '#ff66ab' },
 ];
 let CHART_PERFS = null;
+let chartView = 'progression';
 const chartActive = { '25m': true, '50m': true };
 const chartFilter = { stroke: 'all', dist: 'all' };
 const isDark = () => document.documentElement.dataset.theme === 'dark';
@@ -673,7 +678,7 @@ function render(data, personIndex = 0) {
             <div class="picker-add" id="picker-add">
               <button class="picker-add-toggle" id="picker-add-btn" type="button">+ Ajouter un nageur</button>
               <div class="picker-add-form" id="picker-add-form">
-                <input class="picker-add-input" id="picker-add-name" type="search" placeholder="Nom prénom (ex : fauron eliott)" />
+                <input class="picker-add-input" id="picker-add-name" type="search" placeholder="Nom prénom (ex : marchand leon)" />
                 <button class="picker-add-submit" id="picker-add-search" type="button">Rechercher sur la FFN</button>
                 <div class="pa-results" id="pa-results"></div>
               </div>
@@ -717,14 +722,24 @@ function render(data, personIndex = 0) {
     </div>
 
     <div class="panel" id="sec-progression">
-      <div class="panel-title"><h2>Progression des points</h2><span class="hint">chaque point est une course · filtre par nage, distance et bassin</span></div>
-      <div class="chart-body">
-        <div id="chart-filters" class="chart-filters"></div>
-        <div class="chart-legend">
-          <span class="legend-item" data-pool="25m"><span class="legend-swatch" style="background:${POOL_COLORS['25m']}"></span>Bassin 25 m</span>
-          <span class="legend-item" data-pool="50m"><span class="legend-swatch" style="background:${POOL_COLORS['50m']}"></span>Bassin 50 m</span>
+      <div class="panel-title">
+        <h2>Progression des points</h2>
+        <span class="hint" id="chart-hint">chaque point est une course · filtre par nage, distance et bassin</span>
+        <div class="pool-tabs" id="chart-view-tabs">
+          <button class="pool-tab active" data-view="progression">Progression</button>
+          <button class="pool-tab" data-view="skills">Skills par nage</button>
         </div>
-        <div id="chart-wrap"><svg id="chart"></svg><div class="chart-tooltip" id="tip"></div></div>
+      </div>
+      <div class="chart-body">
+        <div id="view-progression">
+          <div id="chart-filters" class="chart-filters"></div>
+          <div class="chart-legend">
+            <span class="legend-item" data-pool="25m"><span class="legend-swatch" style="background:${POOL_COLORS['25m']}"></span>Bassin 25 m</span>
+            <span class="legend-item" data-pool="50m"><span class="legend-swatch" style="background:${POOL_COLORS['50m']}"></span>Bassin 50 m</span>
+          </div>
+          <div id="chart-wrap"><svg id="chart"></svg><div class="chart-tooltip" id="tip"></div></div>
+        </div>
+        <div id="view-skills" style="display:none"><canvas id="skill-chart"></canvas></div>
       </div>
     </div>
 
@@ -975,6 +990,8 @@ function render(data, personIndex = 0) {
   buildChartFilters(perfs);
   wireLegend();
   drawChart(perfs);
+  wireChartTabs();
+  applyChartView();
 
   /* ---- club records ---- */
   const RC_STROKE = { 'NL': 'NL', 'DOS': 'Dos', 'BR': 'Bra.', 'PAP': 'Pap.', '4N': '4 N.' };
@@ -1217,6 +1234,7 @@ document.getElementById('theme-toggle').addEventListener('click', () => {
   document.documentElement.dataset.theme = next;
   try { localStorage.setItem('theme', next); } catch (e) {}
   if (CHART_PERFS) drawChart(CHART_PERFS);
+  if (chartView === 'skills') drawSkillChart();
 });
 
 function drawChart(perfs) {
@@ -1367,6 +1385,163 @@ function buildChartFilters(perfs) {
     dists.map(d => `<button class="cf-btn" data-cf="dist" data-v="${d}">${d} m</button>`).join('') +
     `</div>`;
 }
+
+/* ---- skills radar (canvas) ---- */
+function skillData() {
+  const best = {};
+  (CHART_PERFS || []).forEach(p => {
+    const k = p.pool + '|' + p.eventCode;
+    if (!best[k] || p._pts > best[k]._pts) best[k] = p;
+  });
+  const byStroke = {};
+  Object.values(best).forEach(p => (byStroke[strokeOf(p.eventCode)] ||= []).push(p._pts));
+  return STROKES
+    .map(s => {
+      const pts = byStroke[s.key];
+      return pts ? { key: s.key, label: s.label, color: s.color, avg: pts.reduce((a, b) => a + b, 0) / pts.length } : null;
+    })
+    .filter(Boolean);
+}
+
+let skillRAF = null;
+function drawSkillChart(instant = false) {
+  const cvs = document.getElementById('skill-chart');
+  if (!cvs) return;
+  const data = skillData();
+  const dpr = window.devicePixelRatio || 1;
+  const W = cvs.parentElement.clientWidth || 640, H = 340;
+  cvs.width = Math.round(W * dpr);
+  cvs.height = Math.round(H * dpr);
+  const ctx = cvs.getContext('2d');
+
+  if (skillRAF) { cancelAnimationFrame(skillRAF); skillRAF = null; }
+  if (!data.length) {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = isDark() ? '#8b8994' : '#999999';
+    ctx.font = '600 13px "Exo 2", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Aucune donnée', W / 2, H / 2);
+    return;
+  }
+
+  const cx = W / 2, cy = H / 2 + 6;
+  const R = Math.min(W, H) / 2 - 62;
+  const rawMax = Math.max(...data.map(d => d.avg));
+  const step = rawMax > 800 ? 200 : 100;
+  const maxV = Math.max(step, Math.ceil(rawMax / step) * step);
+  const N = data.length, LEVELS = 4;
+  const px = (i, r) => cx + Math.cos(-Math.PI / 2 + i * 2 * Math.PI / N) * r;
+  const py = (i, r) => cy + Math.sin(-Math.PI / 2 + i * 2 * Math.PI / N) * r;
+  const GRID = isDark() ? 'rgba(255,255,255,.10)' : 'rgba(0,0,0,.09)';
+  const SPOKE = isDark() ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.05)';
+  const TEXT = isDark() ? '#908e99' : '#939393';
+  const RING_DOT = isDark() ? '#2e2c34' : '#ffffff';
+
+  function frame(t) {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+
+    for (let l = 1; l <= LEVELS; l++) {
+      const rr = R * l / LEVELS;
+      ctx.beginPath();
+      for (let i = 0; i <= N; i++) {
+        i ? ctx.lineTo(px(i % N, rr), py(i % N, rr)) : ctx.moveTo(px(0, rr), py(0, rr));
+      }
+      ctx.strokeStyle = GRID;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.fillStyle = TEXT;
+      ctx.font = '500 9.5px "Exo 2", sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText(String(Math.round(maxV * l / LEVELS)), px(0, rr) + 6, py(0, rr) + 3);
+    }
+
+    data.forEach((d, i) => {
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(px(i, R), py(i, R));
+      ctx.strokeStyle = SPOKE;
+      ctx.stroke();
+
+      const lx = px(i, R + 24), ly = py(i, R + 24);
+      ctx.textAlign = 'center';
+      ctx.fillStyle = d.color;
+      ctx.font = '800 12.5px "Exo 2", sans-serif';
+      ctx.fillText(d.label, lx, ly - 2);
+      ctx.fillStyle = TEXT;
+      ctx.font = '600 11px "Exo 2", sans-serif';
+      ctx.fillText(`${Math.round(d.avg * t)} pts`, lx, ly + 13);
+    });
+
+    ctx.beginPath();
+    data.forEach((d, i) => {
+      const x = px(i, R * (d.avg / maxV) * t), y = py(i, R * (d.avg / maxV) * t);
+      i ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    });
+    ctx.closePath();
+    const grad = ctx.createLinearGradient(cx - R, cy - R, cx + R, cy + R);
+    grad.addColorStop(0, isDark() ? 'rgba(30,144,255,.30)' : 'rgba(30,144,255,.22)');
+    grad.addColorStop(1, isDark() ? 'rgba(255,102,171,.34)' : 'rgba(255,102,171,.28)');
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.strokeStyle = '#ff66ab';
+    ctx.lineWidth = 2.2;
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+
+    data.forEach((d, i) => {
+      const x = px(i, R * (d.avg / maxV) * t), y = py(i, R * (d.avg / maxV) * t);
+      ctx.beginPath();
+      ctx.arc(x, y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = d.color;
+      ctx.fill();
+      ctx.lineWidth = 1.6;
+      ctx.strokeStyle = RING_DOT;
+      ctx.stroke();
+    });
+  }
+
+  if (instant) { frame(1); return; }
+  const t0 = performance.now(), DUR = 650;
+  const run = now => {
+    const k = Math.min(1, (now - t0) / DUR);
+    frame(1 - Math.pow(1 - k, 3));
+    if (k < 1) skillRAF = requestAnimationFrame(run);
+  };
+  skillRAF = requestAnimationFrame(run);
+}
+
+function applyChartView() {
+  const prog = document.getElementById('view-progression');
+  const sk = document.getElementById('view-skills');
+  if (!prog || !sk) return;
+  prog.style.display = chartView === 'progression' ? '' : 'none';
+  sk.style.display = chartView === 'skills' ? '' : 'none';
+  document.querySelectorAll('#chart-view-tabs .pool-tab').forEach(b =>
+    b.classList.toggle('active', b.dataset.view === chartView));
+  document.getElementById('chart-hint').textContent = chartView === 'progression'
+    ? 'chaque point est une course · filtre par nage, distance et bassin'
+    : 'niveau moyen par nage · moyenne des points des records perso';
+  if (chartView === 'skills') drawSkillChart();
+}
+
+function wireChartTabs() {
+  document.querySelectorAll('#chart-view-tabs .pool-tab').forEach(btn =>
+    btn.addEventListener('click', () => {
+      if (chartView === btn.dataset.view) return;
+      chartView = btn.dataset.view;
+      applyChartView();
+    }));
+}
+
+let skillRsT = null;
+window.addEventListener('resize', () => {
+  clearTimeout(skillRsT);
+  skillRsT = setTimeout(() => {
+    if (chartView === 'skills') drawSkillChart(true);
+  }, 150);
+});
 </script>
 </body>
 </html>

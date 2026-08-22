@@ -16,12 +16,6 @@ function swimmerApiPlugin(): Plugin {
   return {
     name: "swimmer-api",
     configureServer(server) {
-      server.middlewares.use((req, res, next) => {
-        if (req.url === "/" || req.url === "/index.html") {
-          req.url = "/profile.html";
-        }
-        next();
-      });
       server.middlewares.use("/api/swimmers", async (req, res, next) => {
         try {
           if (req.method === "POST" && req.url === "/search") {
