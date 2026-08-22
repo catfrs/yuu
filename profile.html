@@ -59,7 +59,6 @@
   .cover {
     height: 320px;
     position: relative;
-    overflow: hidden;
     background:
       radial-gradient(1200px 500px at 15% -20%, rgba(30,144,255,.55), transparent 60%),
       radial-gradient(900px 420px at 85% 120%, rgba(255,102,171,.65), transparent 60%),
@@ -88,7 +87,7 @@
     margin: 0 auto;
     padding: 0 24px;
     position: relative;
-    z-index: 2;
+    z-index: 46;
   }
   .header-row { display: flex; align-items: flex-end; gap: 22px; padding-top: 130px; }
 
@@ -126,6 +125,87 @@
     backdrop-filter: blur(4px);
   }
   .chip .dot { width: 9px; height: 9px; border-radius: 50%; }
+
+  /* ---------- person switcher ---------- */
+  .person-picker { position: relative; margin-left: auto; padding-bottom: 14px; }
+  .picker-btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: inherit; font-size: 12.5px; font-weight: 600; letter-spacing: .4px;
+    color: #fff; background: rgba(255,255,255,.14);
+    border: 1px solid rgba(255,255,255,.25); border-radius: 999px;
+    padding: 6px 14px; cursor: pointer;
+    backdrop-filter: blur(4px);
+    transition: background .15s;
+  }
+  .picker-btn:hover { background: rgba(255,255,255,.24); }
+  .picker-btn::after { content: '▾'; font-size: 11px; opacity: .8; }
+  .person-picker.open .picker-btn::after { content: '▴'; }
+  .picker-menu {
+    position: absolute; right: 0; top: calc(100% + 8px);
+    width: min(300px, calc(100vw - 32px));
+    background: var(--panel); border-radius: 10px;
+    box-shadow: 0 12px 32px rgba(0,0,0,.28);
+    display: none; overflow: hidden; z-index: 45;
+  }
+  .person-picker.open .picker-menu { display: block; }
+  .picker-search {
+    width: 100%; box-sizing: border-box;
+    font-family: inherit; font-size: 13px; font-weight: 500;
+    background: var(--card); color: var(--text);
+    border: none; outline: none;
+    padding: 11px 14px; border-bottom: 1px solid var(--border);
+  }
+  .picker-search::placeholder { color: var(--text-light); opacity: 1; }
+  .picker-list { max-height: 264px; overflow-y: auto; }
+  .picker-item {
+    display: flex; flex-direction: column; gap: 2px;
+    padding: 9px 14px; cursor: pointer;
+    border-left: 3px solid transparent;
+    transition: background .1s;
+  }
+  .picker-item:hover { background: var(--hover-tint); }
+  .picker-item.current { border-left-color: var(--pink); background: var(--hover-tint); }
+  .pi-name { font-weight: 700; font-size: 13.5px; color: var(--text); }
+  .pi-club { font-size: 11px; color: var(--text-light); font-weight: 500; }
+  .picker-empty { padding: 14px; font-size: 12.5px; color: var(--text-light); font-weight: 500; }
+  .picker-add { border-bottom: 1px solid var(--border); padding: 8px; background: var(--card); }
+  .picker-add-toggle {
+    display: block; width: 100%; text-align: left;
+    border: none; background: transparent; color: var(--pink);
+    font-family: inherit; font-size: 12.5px; font-weight: 700;
+    padding: 6px 8px; border-radius: 6px; cursor: pointer;
+  }
+  .picker-add-toggle:hover { background: var(--hover-tint); }
+  .picker-add-form { display: none; margin-top: 8px; }
+  .picker-add-form.open { display: block; }
+  .picker-add-input {
+    width: 100%; box-sizing: border-box;
+    font-family: inherit; font-size: 12.5px; font-weight: 500;
+    border: 2px solid var(--input-border); border-radius: 999px;
+    padding: 7px 12px; outline: none;
+    background: var(--panel); color: var(--text);
+    transition: border-color .15s;
+  }
+  .picker-add-input::placeholder { color: var(--text-light); opacity: 1; }
+  .picker-add-input:focus { border-color: var(--pink); }
+  .picker-add-submit {
+    margin-top: 6px; width: 100%;
+    border: none; background: var(--pink); color: #fff;
+    font-family: inherit; font-weight: 700; font-size: 12px; letter-spacing: .4px;
+    padding: 8px; border-radius: 999px; cursor: pointer;
+    transition: background .15s;
+  }
+  .picker-add-submit:hover { background: var(--pink-dark); }
+  .picker-add-submit:disabled { opacity: .55; cursor: default; }
+  .pa-results { max-height: 160px; overflow-y: auto; margin-top: 6px; }
+  .pa-item {
+    display: flex; flex-direction: column; gap: 1px;
+    padding: 7px 9px; border-radius: 6px; cursor: pointer;
+    transition: background .1s;
+  }
+  .pa-item:hover { background: var(--hover-tint); }
+  .pa-note { padding: 6px 8px; font-size: 11.5px; color: var(--text-light); font-weight: 500; }
+  .pa-note.err { color: #e8484f; }
 
   /* ---------- theme toggle ---------- */
   #theme-toggle {
@@ -296,6 +376,16 @@
   .play-right { text-align: right; }
   .play-time { font-size: 21px; font-weight: 800; font-variant-numeric: tabular-nums; }
   .play-pts { font-size: 12.5px; font-weight: 700; color: var(--pink); }
+  .plays-more-wrap { display: none; justify-content: center; padding: 0 22px 22px; }
+  .plays-more-wrap.on { display: flex; }
+  .plays-more-wrap button {
+    border: none; background: var(--tab-bg); color: var(--text-light);
+    font-family: inherit; font-weight: 700; font-size: 12.5px;
+    padding: 8px 22px; border-radius: 999px; cursor: pointer;
+    letter-spacing: .3px;
+    transition: background .12s, color .12s;
+  }
+  .plays-more-wrap button:hover { background: var(--pink); color: #fff; }
 
   /* ---------- personal bests ---------- */
   .pool-tabs { display: flex; gap: 6px; margin-left: auto; }
@@ -430,6 +520,9 @@
     .sn-inner { gap: 16px; height: 42px; padding: 0 56px 0 14px; }
     .sn-inner a { font-size: 11px; letter-spacing: .5px; }
     [id^="sec-"] { scroll-margin-top: 50px; }
+    .header-row { flex-wrap: wrap; row-gap: 10px; }
+    .person-picker { margin-left: 0; padding-bottom: 0; order: 3; }
+    .person-picker.open .picker-menu { right: auto; left: 0; }
     .pool-tabs { width: 100%; margin-left: 0; margin-top: 8px; }
     .panel-title { flex-wrap: wrap; row-gap: 2px; }
     .pb-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
@@ -471,13 +564,6 @@ const STROKES = [
   { key: 'Pap.', label: 'Papillon',    color: '#ff8c42' },
   { key: '4 N.', label: '4 Nages',     color: '#ff66ab' },
 ];
-const GRADES = p =>
-  p >= 1150 ? ['SS', '#ffd700', '#c99700'] :
-  p >= 1100 ? ['S',  '#ffd700', '#c99700'] :
-  p >= 1020 ? ['A',  '#8fd674', '#4f9731'] :
-  p >=  900 ? ['B',  '#74b9e8', '#2e6da4'] :
-              ['C',  '#c9a0dd', '#7d4ba0'];
-
 let CHART_PERFS = null;
 const chartActive = { '25m': true, '50m': true };
 const chartFilter = { stroke: 'all', dist: 'all' };
@@ -488,9 +574,16 @@ function matchPerf(p) {
       && (chartFilter.dist === 'all' || parseInt(p.eventCode) === +chartFilter.dist);
 }
 
+let ALL_DATA = [];
 fetch('./data/performances.json')
   .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
-  .then(render)
+  .then(data => {
+    ALL_DATA = Array.isArray(data) ? data : [data];
+    const wanted = String(parseInt((location.hash || '').slice(1), 10));
+    let idx = ALL_DATA.findIndex(e => e.person.iuf === wanted);
+    if (idx < 0) idx = 0;
+    render([ALL_DATA[idx]], idx);
+  })
   .catch(() => {});
 
 function timeToSec(t) {
@@ -521,9 +614,11 @@ function parseCSV(str) {
   return rows;
 }
 
-function render(data) {
+function render(data, personIndex = 0) {
   const person = data[0].person;
   const info = parsePerson(person.ind);
+  const RC_SURNAME = (info.name.split(/\s+/)[0] || '').trim();
+  const RC_NAME_RE = new RegExp(RC_SURNAME.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
   let perfs = [];
   data.forEach(p => p.performances.forEach(x => perfs.push({
     ...x,
@@ -539,14 +634,25 @@ function render(data) {
   const nYears = firstDate ? Math.max(1, Math.round((new Date() - new Date(firstDate._date)) / 31557600000)) : 1;
   const best = perfs[0];
   const pbKeys = {};
+  const pbBest = [];
   const pbCount = (() => {
     const seen = new Set();
     perfs.forEach(p => {
       const k = p.pool + '|' + p.eventCode;
-      if (!seen.has(k)) { seen.add(k); pbKeys[p.pool + p.eventCode + p.time] = true; }
+      if (!seen.has(k)) { seen.add(k); pbKeys[p.pool + p.eventCode + p.time] = true; pbBest.push(p); }
     });
     return seen.size;
   })();
+  const avgPB = Math.round(pbBest.reduce((s, p) => s + p._pts, 0) / pbBest.length);
+  const strokePts = {};
+  pbBest.forEach(p => {
+    const s = strokeOf(p.eventCode);
+    (strokePts[s] = strokePts[s] || []).push(p._pts);
+  });
+  const STROKE_LABELS = Object.fromEntries(STROKES.map(s => [s.key, s.label]));
+  const worstStroke = Object.entries(strokePts)
+    .map(([key, pts]) => ({ key, label: STROKE_LABELS[key] || key, avg: pts.reduce((a, b) => a + b, 0) / pts.length }))
+    .sort((a, b) => a.avg - b.avg)[0];
 
   APP.innerHTML = `
   <div class="cover">
@@ -558,6 +664,21 @@ function render(data) {
           <div class="user-sub">
             <span class="chip"><span class="dot" style="background:${person.sex}"></span>${person.clb}</span>
             <span class="chip">🇫🇷 ${info.country}</span>
+          </div>
+        </div>
+        <div class="person-picker" id="person-picker">
+          <button class="picker-btn" id="picker-btn" type="button"></button>
+          <div class="picker-menu">
+            <input class="picker-search" id="picker-search" type="search" placeholder="Rechercher un nageur…" />
+            <div class="picker-add" id="picker-add">
+              <button class="picker-add-toggle" id="picker-add-btn" type="button">+ Ajouter un nageur</button>
+              <div class="picker-add-form" id="picker-add-form">
+                <input class="picker-add-input" id="picker-add-name" type="search" placeholder="Nom prénom (ex : fauron eliott)" />
+                <button class="picker-add-submit" id="picker-add-search" type="button">Rechercher sur la FFN</button>
+                <div class="pa-results" id="pa-results"></div>
+              </div>
+            </div>
+            <div class="picker-list" id="picker-list"></div>
           </div>
         </div>
       </div>
@@ -589,10 +710,10 @@ function render(data) {
 
     <div class="stats-row" id="sec-stats">
       ${statCard('Meilleure performance', `${best._pts} pts`, `${best.eventCode} · ${best.time}`, '#ff66ab')}
-      ${statCard('Moyenne de points', Math.round(perfs.reduce((s, p) => s + p._pts, 0) / perfs.length) + ' pts', `sur ${perfs.length} courses`, '#1e90ff')}
+      ${statCard('Moyenne de points', avgPB + ' pts', `meilleure perf par bassin · pire nage : ${worstStroke.label} (${Math.round(worstStroke.avg)} pts)`, '#1e90ff')}
       ${statCard('Records personnels', pbCount, 'épreuves distinctes (par bassin)', '#3bb98f')}
       ${statCard('Niveau max', 'NAT', `${perfs.filter(p => p.level.includes('NAT')).length} courses nationales`, '#e8484f')}
-      ${statCard('Records du club', '<span id="rc-total">…</span>', 'détenteurs actuels', '#ffc84a')}
+      ${statCard('Records du club', '<span id="rc-total">…</span>', `détenus par ${info.name}`, '#ffc84a')}
     </div>
 
     <div class="panel" id="sec-progression">
@@ -608,8 +729,9 @@ function render(data) {
     </div>
 
     <div class="panel" id="sec-perfs">
-      <div class="panel-title"><h2>Meilleures performances</h2><span class="hint">top 8 · record par épreuve</span></div>
+      <div class="panel-title"><h2>Meilleures performances</h2><span class="hint">top 10 · record par épreuve</span></div>
       <div class="plays-grid" id="top-plays"></div>
+      <div class="plays-more-wrap" id="top-plays-more-wrap"><button id="top-plays-more" type="button">Charger 10 de plus</button></div>
     </div>
 
     <div class="panel" id="sec-pb">
@@ -669,14 +791,18 @@ function render(data) {
     const k = p.pool + '|' + p.eventCode;
     if (!bestPerCombo[k] || p._pts > bestPerCombo[k]._pts) bestPerCombo[k] = p;
   });
-  const top = Object.values(bestPerCombo).sort((a, b) => b._pts - a._pts).slice(0, 8);
-  document.getElementById('top-plays').innerHTML = top.map((p, i) => {
-    const [g] = GRADES(p._pts);
-    const medalBg = ['#c99700', '#8f9aa5', '#a5673c'][i] || '#7d47ab';
-    const stroke = STROKES.find(s => p.eventCode.includes(s.key));
-    return `
+  const TOP_STEP = 10, TOP_MAX = 50;
+  const top = Object.values(bestPerCombo).sort((a, b) => b._pts - a._pts).slice(0, TOP_MAX);
+  let topShown = Math.min(TOP_STEP, top.length);
+  const playsGrid = document.getElementById('top-plays');
+  const moreWrap = document.getElementById('top-plays-more-wrap');
+  function renderTopPlays() {
+    playsGrid.innerHTML = top.slice(0, topShown).map((p, i) => {
+      const medalBg = ['#c99700', '#8f9aa5', '#a5673c'][i] || '#7d47ab';
+      const stroke = STROKES.find(s => p.eventCode.includes(s.key));
+      return `
     <div class="play-row" style="--medal:${i === 0 ? '#c99700' : i === 1 ? '#8f9aa5' : i === 2 ? '#a5673c' : '#9b59d0'}">
-      <div class="rank-badge" style="--medal-bg:${medalBg}" title="Grade estimé ${g}">#${i + 1}</div>
+      <div class="rank-badge" style="--medal-bg:${medalBg}">#${i + 1}</div>
       <div class="play-main">
         <div class="play-event" style="${stroke ? `color:${stroke.color}` : ''}">${p.eventCode}</div>
         <div class="play-meta">
@@ -689,7 +815,16 @@ function render(data) {
         <div class="play-pts">${p.points}</div>
       </div>
     </div>`;
-  }).join('');
+    }).join('');
+    moreWrap.classList.toggle('on', topShown < top.length);
+    document.getElementById('top-plays-more').textContent =
+      `Charger 10 de plus (${topShown}/${top.length})`;
+  }
+  document.getElementById('top-plays-more').addEventListener('click', () => {
+    topShown = Math.min(topShown + TOP_STEP, top.length);
+    renderTopPlays();
+  });
+  renderTopPlays();
 
   /* ---- personal bests ---- */
   function renderPB(poolFilter) {
@@ -845,7 +980,7 @@ function render(data) {
   const RC_STROKE = { 'NL': 'NL', 'DOS': 'Dos', 'BR': 'Bra.', 'PAP': 'Pap.', '4N': '4 N.' };
   const RC_LABEL = { 'NL': 'Nage Libre', 'DOS': 'Dos', 'BR': 'Brasse', 'PAP': 'Papillon', '4N': '4 Nages' };
   function loadRecords(pool) {
-    return fetch(`./data/club-records-${pool}.csv`)
+    return fetch(`./data/club-records-${pool}.csv?t=` + Date.now())
       .then(r => r.ok ? r.text() : '')
       .then(txt => {
         if (!txt) return [];
@@ -860,7 +995,7 @@ function render(data) {
           r.slice(1, 12).forEach((cell, i) => {
             if (!cell) return;
             const lines = cell.split('\n').map(s => s.trim());
-            if (!lines.some(l => /fauron/i.test(l))) return;
+            if (!RC_SURNAME || !lines.some(l => RC_NAME_RE.test(l))) return;
             out.push({
               pool, dist: +dm[1], strokeKey: dm[2].toUpperCase(),
               age: ages[i], time: lines[0],
@@ -950,6 +1085,124 @@ function render(data) {
   window.addEventListener('scroll', updateActiveSec, { passive: true });
   updateActiveSec();
   updateSnFades();
+
+  /* ---- person switcher ---- */
+  const picker = document.getElementById('person-picker');
+  const pBtn = document.getElementById('picker-btn');
+  const pSearch = document.getElementById('picker-search');
+  const pList = document.getElementById('picker-list');
+  pBtn.textContent = `Nageurs (${ALL_DATA.length})`;
+  function renderPickerList(q = '') {
+    const items = ALL_DATA
+      .map((e, i) => ({ e, i }))
+      .filter(({ e }) => !q
+        || e.person.ind.toLowerCase().includes(q)
+        || (e.person.clb || '').toLowerCase().includes(q));
+    pList.innerHTML = items.length ? items.map(({ e, i }) => `
+      <div class="picker-item${i === personIndex ? ' current' : ''}" data-i="${i}">
+        <span class="pi-name">${e.person.ind.split(' (')[0]}</span>
+        <span class="pi-club">${e.person.clb} · ${e.performances.length} résultats</span>
+      </div>`).join('') : '<div class="picker-empty">Aucun nageur trouvé</div>';
+  }
+  pBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    picker.classList.toggle('open');
+    if (picker.classList.contains('open')) {
+      pSearch.value = '';
+      renderPickerList();
+      pSearch.focus();
+    }
+  });
+  pSearch.addEventListener('input', () => renderPickerList(pSearch.value.trim().toLowerCase()));
+  pList.addEventListener('click', e => {
+    const it = e.target.closest('.picker-item');
+    if (!it) return;
+    const i = +it.dataset.i;
+    if (i === personIndex) { picker.classList.remove('open'); return; }
+    try { history.replaceState(null, '', '#' + ALL_DATA[i].person.iuf); } catch (err) {}
+    picker.classList.remove('open');
+    window.scrollTo(0, 0);
+    render([ALL_DATA[i]], i);
+  });
+  document.addEventListener('click', e => {
+    if (!picker.contains(e.target)) picker.classList.remove('open');
+  });
+
+  /* ---- add swimmer from FFN ---- */
+  const paBtn = document.getElementById('picker-add-btn');
+  const paForm = document.getElementById('picker-add-form');
+  const paName = document.getElementById('picker-add-name');
+  const paSearch = document.getElementById('picker-add-search');
+  const paResults = document.getElementById('pa-results');
+  let paBusy = false;
+  function api(path, payload) {
+    return fetch('/api/swimmers/' + path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }).then(async r => {
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(j.error || 'Erreur réseau');
+      return j;
+    });
+  }
+  paBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    paForm.classList.toggle('open');
+    if (paForm.classList.contains('open')) setTimeout(() => paName.focus(), 30);
+  });
+  async function runAddSearch() {
+    if (paBusy) return;
+    const q = paName.value.trim();
+    if (q.length < 4) {
+      paResults.innerHTML = '<div class="pa-note">Entrez au moins 4 caractères.</div>';
+      return;
+    }
+    paBusy = true;
+    paSearch.disabled = true;
+    paResults.innerHTML = '<div class="pa-note">Recherche sur la FFN…</div>';
+    try {
+      const { people } = await api('search', { query: q });
+      if (!people.length) {
+        paResults.innerHTML = '<div class="pa-note">Aucun nageur trouvé sur la FFN.</div>';
+        return;
+      }
+      paResults.innerHTML = people.map(p => `
+        <div class="pa-item" data-iuf="${p.iuf}" data-ind="${String(p.ind).replace(/"/g, '&quot;')}" data-sex="${p.sex ?? ''}" data-clb="${String(p.clb ?? '').replace(/"/g, '&quot;')}">
+          <span class="pi-name">${p.ind.split(' (')[0]}</span>
+          <span class="pi-club">${p.clb}</span>
+        </div>`).join('');
+    } catch (err) {
+      paResults.innerHTML = `<div class="pa-note err">${err.message}</div>`;
+    } finally {
+      paBusy = false;
+      paSearch.disabled = false;
+    }
+  }
+  paSearch.addEventListener('click', runAddSearch);
+  paName.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); runAddSearch(); }
+  });
+  paResults.addEventListener('click', async e => {
+    const it = e.target.closest('.pa-item');
+    if (!it || paBusy) return;
+    paBusy = true;
+    it.innerHTML = '<div class="pa-note">Ajout en cours… (quelques secondes)</div>';
+    try {
+      await api('add', { iuf: it.dataset.iuf, ind: it.dataset.ind, sex: it.dataset.sex, clb: it.dataset.clb });
+      const r = await fetch('./data/performances.json?t=' + Date.now());
+      ALL_DATA = await r.json();
+      let idx = ALL_DATA.findIndex(x => x.person.iuf === it.dataset.iuf);
+      if (idx < 0) idx = ALL_DATA.length - 1;
+      try { history.replaceState(null, '', '#' + ALL_DATA[idx].person.iuf); } catch (err) {}
+      picker.classList.remove('open');
+      window.scrollTo(0, 0);
+      render([ALL_DATA[idx]], idx);
+    } catch (err) {
+      it.innerHTML = `<div class="pa-note err">${err.message}</div>`;
+      paBusy = false;
+    }
+  });
 }
 
 function statCard(label, value, sub, accent) {
