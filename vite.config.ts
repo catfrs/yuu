@@ -73,6 +73,7 @@ export default defineConfig({
       input: {
         main: "index.html",
         profile: "profile.html",
+        blank: "blank.html",
       },
     },
   },

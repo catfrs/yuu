@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>yuu · Nageurs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --pink: #ff66ab;
+      --pink-dark: #e35b93;
+      --bg: #121214;
+      --panel: #1a1a1e;
+      --text: #e0e0e2;
+      --text-light: #6b6b7a;
+      --border: rgba(255, 255, 255, .08);
+      --card: #25252a;
+      --blue: #1e90ff;
+      --gold: #ffc84a;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Exo 2', sans-serif;
+      background: #121214;
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ---------- blur background ---------- */
+    .bg-blur {
+      position: fixed;
+      inset: 0;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      content: '';
+      pointer-events: none;
+      z-index: -1;
+    }
+    .bg-blur::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        radial-gradient(circle at 30% 20%, rgba(255,102,171,.03) 0%, transparent 50%),
+        radial-gradient(circle at 70% 80%, rgba(30,144,255,.03) 0%, transparent 50%),
+        radial-gradient(circle at 60% 30%, rgba(255,165,0,.02) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: -1;
+      opacity: .3;
+    }
+
+    /* ---------- main content ---------- */
+    .main-content {
+      position: relative;
+      z-index: 10;
+      padding: 80px 24px 40px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* ---------- hero / title ---------- */
+    .hero {
+      position: relative;
+      padding: 80px 24px 40px;
+      text-align: center;
+      color: #fff;
+    }
+    .hero::after {
+      content: '';
+      position: absolute; inset: 0;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      z-index: -1;
+      opacity: .5;
+    }
+    .hero-inner { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; }
+    .logo {
+      font-size: 64px; font-weight: 900; letter-spacing: 2px; line-height: 1;
+      text-shadow: 0 4px 18px rgba(0,0,0,.45);
+    }
+    .logo span { color: var(--pink); }
+    .tagline {
+      margin-top: 12px; font-size: 16px; font-weight: 500; opacity: .85;
+      letter-spacing: .4px;
+    }
+
+    /* ---------- swimmers grid ---------- */
+    .wrap { max-width: 1100px; margin: -35px auto 0; padding: 0 24px 70px; position: relative; z-index: 2; }
+    .section-label {
+      display: flex; align-items: baseline; gap: 10px;
+      margin-bottom: 14px;
+    }
+    .section-label h2 { font-size: 17px; font-weight: 800; color: var(--text); letter-spacing: .3px; }
+    .section-label span { font-size: 12px; color: var(--text-light); font-weight: 500; }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 16px;
+    }
+    a.swimmer-card {
+      display: block; text-decoration: none; color: inherit;
+      background: var(--panel); border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.09);
+      padding: 20px;
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+    a.swimmer-card:hover { transform: translateY(-4px); box-shadow: 0 12px 26px rgba(0,0,0,.16); }
+    .sc-head { display: flex; align-items: center; gap: 14px; }
+    .sc-avatar {
+      width: 56px; height: 56px; border-radius: 50%; flex-shrink: 0;
+      padding: 3px;
+      background: linear-gradient(140deg, var(--blue), var(--pink));
+      display: flex; align-items: center; justify-content: center;
+    }
+    .sc-avatar div {
+      width: 100%; height: 100%; border-radius: 50%;
+      background: #23232e; border: 2px solid rgba(255,255,255,.85);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 19px; font-weight: 800; color: #fff; letter-spacing: 1px;
+    }
+    .sc-name { font-size: 16.5px; font-weight: 800; letter-spacing: .3px; line-height: 1.2; }
+    .sc-born { font-size: 11.5px; color: var(--text-light); font-weight: 600; margin-top: 2px; }
+    .sc-club {
+      margin-top: 12px; font-size: 12px; color: var(--text-light); font-weight: 600;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .sc-foot {
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border);
+    }
+    .sc-stat b { font-size: 19px; font-weight: 800; }
+    .sc-stat span { font-size: 10.5px; text-transform: uppercase; letter-spacing: .7px; color: var(--text-light); font-weight: 700; display: block; }
+    .sc-open {
+      font-size: 11.5px; font-weight: 800; color: var(--pink); letter-spacing: .4px;
+      white-space: nowrap;
+    }
+
+    .loading, .error-msg {
+      max-width: 560px; margin: 0 auto; background: var(--panel);
+      border-radius: 10px; padding: 26px; text-align: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,.09);
+      color: var(--text-light); font-size: 13.5px; font-weight: 500;
+    }
+    .error-msg a { color: var(--pink); font-weight: 700; text-decoration: none; }
+
+    footer { text-align: center; color: var(--text-light); font-size: 12px; padding: 0 24px 40px; font-weight: 500; }
+    footer a { color: var(--pink); text-decoration: none; }
+
+    @media (max-width: 720px) {
+      .hero { padding: 80px 20px 60px; }
+      .logo { font-size: 48px; }
+      .wrap { padding: 0 20px 50px; }
+      .grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+      a.swimmer-card { padding: 16px; }
+      .sc-name { font-size: 15px; }
+      .sc-stat b { font-size: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg-blur"></div>
+
+<header class="hero">
+  <div class="hero-inner">
+    <div class="logo">yuu<span>.</span></div>
+    <p class="tagline">Profils de nageurs · données FFN</p>
+  </div>
+</header>
+
+<div class="wrap">
+  <main>
+    <div class="section-label">
+      <h2>Nageurs</h2>
+      <span id="count-note">chargement…</span>
+    </div>
+    <div class="grid" id="swimmers"></div>
+    <noscript><p class="error-msg" style="margin-top:16px">Activez JavaScript pour voir la liste des nageurs.</p></noscript>
+  </main>
+</div>
+
+<footer>données · <a href="./data/performances.json">performances.json</a></footer>
+
+<script>
+const GRID = document.getElementById('swimmers');
+const COUNT = document.getElementById('count-note');
+const initialsOf = name => name.split(/\s+/).map(s => s[0]).slice(-2).join('').toUpperCase();
+const secOf = t => { const m = t.match(/^(?:(\d+):)?(\d{1,2}):(\d{2}(?:\.\d+)?)$/); return m ? (+m[1]||0)*3600+(+m[2])*60+parseFloat(m[3]) : parseFloat(t)||0; };
+
+fetch('./data/performances.json')
+  .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+  .then(data => {
+    const entries = Array.isArray(data) ? data : [data];
+    COUNT.textContent = entries.length + ' nageur' + (entries.length > 1 ? 's' : '');
+    GRID.innerHTML = entries.map(e => {
+      const p = e.person || {};
+      const perfs = Array.isArray(e.performances) ? e.performances : [];
+      const best = perfs.reduce((m, x) => Math.max(m, parseInt(x.points) || 0), 0);
+      const born = (p.ind.match(/\((\d{4})\)/) || [])[1];
+      const iuf = p.iuf != null ? p.iuf : '';
+      return `
+      <a class="swimmer-card" href="./profile.html#${iuf}">
+        <div class="sc-head">
+          <div class="sc-avatar"><div>${initialsOf(p.ind || '?')}</div></div>
+          <div style="min-width:0">
+            <div class="sc-name">${(p.ind || 'Nageur').split(' (')[0]}</div>
+            ${born ? `<div class="sc-born">né en ${born}</div>` : ''}
+          </div>
+        </div>
+        <div class="sc-club">${p.clb || ''}</div>
+        <div class="sc-foot">
+          <div class="sc-stat"><b>${perfs.length}</b><span>résultats</span></div>
+          <div class="sc-stat"><b>${best}</b><span>meilleur pts</span></div>
+          <span class="sc-open">Voir →</span>
+        </div>
+      </a>`;
+    }).join('');
+  })
+  .catch(() => {
+    COUNT.textContent = '';
+    GRID.innerHTML = `<p class="error-msg" style="grid-column:1/-1">Impossible de charger les données.<br/>
+    Lance le serveur (<code>npx vite</code>) puis ouvre cette page via HTTP.<br/><br/>
+    <a href="/">Retour à l'accueil →</a></p>`;
+  });
+</script>
+
+</body>
+</html>
